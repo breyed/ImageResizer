@@ -1,0 +1,3 @@
+--disable blankLinesBetweenScopes,unusedArguments,wrap,wrapArguments
+--enable isEmpty
+--header strip
