@@ -8,7 +8,7 @@ let maxDimension = 1024
 // Get the folder path from the command line
 let arguments = CommandLine.arguments
 guard arguments.count == 2 else {
-	print("Syntax: ImageResizer <maxDimension> <folder>")
+	print("Syntax: ImageResizer <folder>")
 	exit(1)
 }
 
