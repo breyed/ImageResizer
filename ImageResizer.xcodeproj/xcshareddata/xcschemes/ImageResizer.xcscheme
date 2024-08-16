@@ -51,12 +51,6 @@
             ReferencedContainer = "container:ImageResizer.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
-      <CommandLineArguments>
-         <CommandLineArgument
-            argument = "/Users/brey/Downloads/Test"
-            isEnabled = "YES">
-         </CommandLineArgument>
-      </CommandLineArguments>
       <EnvironmentVariables>
          <EnvironmentVariable
             key = "CGBITMAP_CONTEXT_LOG_ERRORS"

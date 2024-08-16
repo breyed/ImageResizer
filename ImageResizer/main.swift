@@ -51,16 +51,12 @@ for fileURL in fileURLs {
 	context.interpolationQuality = .high
 
 	// Read the image orientation metadata
-	guard
-		let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, [kCGImageSourceShouldCache: false] as CFDictionary) as? [CFString: Any],
-		let orientationValue = properties[kCGImagePropertyOrientation] as? UInt32,
-		let orientation = CGImagePropertyOrientation(rawValue: orientationValue)
-	else { print("Failed to read orientation"); exit(1) }
+	let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, [kCGImageSourceShouldCache: false] as CFDictionary) as! [CFString: Any]
+	let orientation = CGImagePropertyOrientation(rawValue: (properties[kCGImagePropertyOrientation] as? UInt32) ?? 0)
 
-	// Apply transformation as needed to account for EXIF orientation.
+	// Transform based on original image orientation metadata.
 	var transform = CGAffineTransform.identity
 	switch orientation {
-	case .up: break
 	case .upMirrored: transform = transform.translatedBy(x: newSize.width, y: 0).scaledBy(x: -1, y: 1)
 	case .down: transform = transform.translatedBy(x: newSize.width, y: newSize.height).rotated(by: .pi)
 	case .downMirrored: transform = transform.translatedBy(x: 0, y: newSize.height).scaledBy(x: 1, y: -1)
@@ -68,15 +64,22 @@ for fileURL in fileURLs {
 	case .leftMirrored: transform = transform.translatedBy(x: newSize.width, y: newSize.height).scaledBy(x: -1, y: 1).rotated(by: -.pi / 2)
 	case .right: transform = transform.translatedBy(x: newSize.width, y: 0).rotated(by: .pi / 2)
 	case .rightMirrored: transform = transform.scaledBy(x: -1, y: 1).rotated(by: .pi / 2)
+	default: break
 	}
 	context.concatenate(transform)
-	
+
 	// Draw the image
 	context.draw(image, in: CGRect(origin: .zero, size: newSize))
 	guard let resizedImage = context.makeImage() else { print("Failed to create resized image"); exit(1) }
 
+	// Determine the output format and file extension
+	let losslessTypes: [String] = [UTType.png, UTType.tiff, UTType.gif].map { $0.identifier }
+	guard let type = CGImageSourceGetType(source) else { print("Failed to get image type"); exit(1) }
+	let outputType = losslessTypes.contains(type as String) ? UTType.png : UTType.jpeg
+	let outputPath = outputFolderURL.appendingPathComponent(fileURL.lastPathComponent).deletingPathExtension().appendingPathExtension(for: outputType)
+
 	// Save the image
-	guard let destination = CGImageDestinationCreateWithURL(outputFolderURL.appendingPathComponent(fileURL.lastPathComponent) as CFURL, UTType.jpeg.identifier as CFString, 1, nil) else { print("Failed to create image destination"); exit(1) }
+	guard let destination = CGImageDestinationCreateWithURL(outputPath as CFURL, outputType.identifier as CFString, 1, nil) else { print("Failed to create image destination"); exit(1) }
 	CGImageDestinationAddImage(destination, resizedImage, nil)
 	guard CGImageDestinationFinalize(destination) else { print("Failed to save image"); exit(1) }
 }
